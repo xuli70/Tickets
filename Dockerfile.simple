@@ -1,0 +1,22 @@
+# Dockerfile simple para React + Vite
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copiar package.json
+COPY package.json ./
+
+# Instalar todas las dependencias
+RUN npm install --legacy-peer-deps
+
+# Copiar el resto del código
+COPY . .
+
+# Construir la aplicación
+RUN npm run build
+
+# Exponer el puerto
+EXPOSE 8080
+
+# Comando para iniciar
+CMD ["npm", "run", "start"]
