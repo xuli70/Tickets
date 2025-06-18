@@ -1,0 +1,35 @@
+# Dockerfile.verify - Con verificación de archivos antes del build
+
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Instalar herramientas necesarias
+RUN apk add --no-cache python3 make g++ caddy bash
+
+# Copiar archivos del proyecto
+COPY package.json ./
+
+# Instalar dependencias
+RUN npm install --legacy-peer-deps
+
+# Copiar el resto del código
+COPY . .
+
+# Hacer el script ejecutable y ejecutarlo
+RUN chmod +x build.sh && \
+    ./build.sh
+
+# Crear Caddyfile para servir la aplicación
+RUN echo -e ":${PORT:-8080} {\n\
+    root * /app/dist\n\
+    file_server\n\
+    try_files {path} /index.html\n\
+    encode gzip\n\
+}" > /app/Caddyfile
+
+# Exponer el puerto
+EXPOSE 8080
+
+# Comando para iniciar Caddy
+CMD ["caddy", "run", "--config", "/app/Caddyfile", "--adapter", "caddyfile"]
