@@ -5,10 +5,10 @@ FROM node:18-alpine AS builder
 WORKDIR /app
 
 # Copiar archivos de dependencias
-COPY package*.json ./
+COPY package.json ./
 
-# Instalar dependencias
-RUN npm ci --legacy-peer-deps
+# Instalar dependencias (usando install en lugar de ci)
+RUN npm install --legacy-peer-deps
 
 # Copiar el resto del código
 COPY . .
@@ -23,11 +23,11 @@ WORKDIR /app
 
 # Copiar archivos necesarios desde la etapa de construcción
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/package.json ./
 COPY --from=builder /app/vite.config.js ./
 
 # Instalar solo dependencias de producción
-RUN npm ci --production --legacy-peer-deps
+RUN npm install --production --legacy-peer-deps
 
 # Exponer el puerto
 EXPOSE 8080
