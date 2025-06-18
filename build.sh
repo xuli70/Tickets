@@ -1,19 +1,42 @@
-# build.sh
 #!/bin/bash
 set -e
 
-echo "🚀 Iniciando build de la aplicación..."
+echo "🔍 Verificando archivos necesarios..."
 
-# Limpiar cache y archivos anteriores
-echo "🧹 Limpiando archivos anteriores..."
-rm -rf node_modules package-lock.json
+# Lista de archivos críticos que deben existir
+REQUIRED_FILES=(
+  "src/hooks/useAppData.js"
+  "src/lib/supabase.js"
+  "src/lib/utils.js"
+)
 
-# Instalar dependencias
+# Verificar cada archivo
+for file in "${REQUIRED_FILES[@]}"; do
+  if [ ! -f "$file" ]; then
+    echo "⚠️  Archivo faltante: $file"
+    
+    # Crear archivos faltantes básicos si es necesario
+    case "$file" in
+      "src/lib/utils.js")
+        mkdir -p src/lib
+        echo 'import { clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs) {
+  return twMerge(clsx(inputs));
+}' > "$file"
+        echo "✅ Creado: $file"
+        ;;
+    esac
+  else
+    echo "✅ Existe: $file"
+  fi
+done
+
 echo "📦 Instalando dependencias..."
 npm install --legacy-peer-deps
 
-# Construir la aplicación
-echo "🔨 Construyendo la aplicación..."
+echo "🔨 Construyendo aplicación..."
 npm run build
 
-echo "✅ Build completado exitosamente!"
+echo "✅ Build completado!"
