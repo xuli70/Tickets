@@ -1,13 +1,19 @@
-# Dockerfile simple para React + Vite
+# Dockerfile.simple - Versión simplificada sin multi-stage build
+
 FROM node:18-alpine
 
 WORKDIR /app
 
-# Copiar package.json
+# Instalar herramientas necesarias
+RUN apk add --no-cache python3 make g++ caddy
+
+# Copiar archivos del proyecto
 COPY package.json ./
 
-# Instalar todas las dependencias
-RUN npm install --legacy-peer-deps
+# Limpiar e instalar dependencias frescas
+RUN rm -rf node_modules package-lock.json && \
+    npm cache clean --force && \
+    npm install --legacy-peer-deps
 
 # Copiar el resto del código
 COPY . .
@@ -15,8 +21,16 @@ COPY . .
 # Construir la aplicación
 RUN npm run build
 
+# Crear Caddyfile para servir la aplicación
+RUN echo -e ":${PORT:-8080} {\n\
+    root * /app/dist\n\
+    file_server\n\
+    try_files {path} /index.html\n\
+    encode gzip\n\
+}" > /app/Caddyfile
+
 # Exponer el puerto
 EXPOSE 8080
 
-# Comando para iniciar
-CMD ["npm", "run", "start"]
+# Comando para iniciar Caddy
+CMD ["caddy", "run", "--config", "/app/Caddyfile", "--adapter", "caddyfile"]
